@@ -16,7 +16,11 @@ export default function PlatformReturnPill({ onSignOut }) {
       <button
         type="button"
         className="platform-return-button signout"
-        onClick={onSignOut}
+        onClick={() => {
+          localStorage.clear()
+          sessionStorage.clear()
+          window.location.href = 'https://app.deepsitecontrol.com'
+        }}
       >
         Sign Out
       </button>
