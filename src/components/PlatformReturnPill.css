@@ -1,0 +1,50 @@
+.platform-return-pill {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 5000;
+
+  display: flex;
+  gap: 10px;
+
+  padding: 10px;
+
+  border: 1px solid rgba(245, 194, 66, 0.35);
+  border-radius: 18px;
+
+  background: rgba(8, 10, 18, 0.82);
+  backdrop-filter: blur(14px);
+
+  box-shadow:
+    0 0 30px rgba(245, 194, 66, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.platform-return-button {
+  border: none;
+  border-radius: 12px;
+
+  padding: 10px 16px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  color: #f4f4f5;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.platform-return-button:hover {
+  background: rgba(245, 194, 66, 0.16);
+  transform: translateY(-1px);
+}
+
+.platform-return-button.signout:hover {
+  background: rgba(255, 70, 70, 0.16);
+}

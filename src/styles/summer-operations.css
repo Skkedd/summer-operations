@@ -1,0 +1,245 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #07090d;
+  color: #f7f7f8;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+.summer-operations-page {
+  min-height: 100vh;
+  padding: 28px;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(circle at 18% 12%, rgba(245, 194, 66, 0.16), transparent 30%),
+    radial-gradient(circle at 85% 18%, rgba(245, 194, 66, 0.08), transparent 28%),
+    linear-gradient(135deg, #07090d 0%, #10141b 48%, #080a0f 100%);
+}
+
+.summer-operations-hero {
+  max-width: 960px;
+  padding-top: 18px;
+  margin-bottom: 32px;
+}
+
+.summer-operations-eyebrow {
+  color: #f5c242;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.summer-operations-title {
+  max-width: 780px;
+  margin: 0;
+
+  font-size: clamp(3.5rem, 8vw, 6.8rem);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+  font-weight: 900;
+}
+
+.summer-operations-subtitle {
+  max-width: 780px;
+  margin: 24px 0 0;
+
+  color: #cbd5e1;
+  font-size: 1.12rem;
+  line-height: 1.65;
+}
+
+.summer-operations-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.primary-action,
+.secondary-action {
+  border: 0;
+  border-radius: 16px;
+  padding: 14px 20px;
+
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.primary-action {
+  background: #f5c242;
+  color: #080a0f;
+  box-shadow: 0 0 32px rgba(245, 194, 66, 0.22);
+}
+
+.secondary-action {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f7f7f8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.primary-action:hover,
+.secondary-action:hover {
+  transform: translateY(-1px);
+}
+
+.secondary-action:hover {
+  background: rgba(245, 194, 66, 0.12);
+  border-color: rgba(245, 194, 66, 0.28);
+}
+
+.summer-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 1360px;
+}
+
+.summer-card {
+  min-height: 190px;
+  padding: 24px;
+  border: 1px solid rgba(245, 194, 66, 0.16);
+  border-radius: 26px;
+
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(15, 20, 27, 0.86);
+
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(16px);
+}
+
+.large-card {
+  grid-column: span 2;
+}
+
+.wide-card {
+  grid-column: span 2;
+}
+
+.card-label {
+  color: #f5c242;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.card-title {
+  font-size: 2.1rem;
+  line-height: 1.04;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  margin-bottom: 26px;
+}
+
+.summer-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-block {
+  min-height: 94px;
+  padding: 16px;
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric-value,
+.big-number {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+}
+
+.metric-label,
+.small-text {
+  margin-top: 10px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.big-status {
+  color: #f5c242;
+  font-size: 2.45rem;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -0.07em;
+}
+
+.timeline-preview {
+  color: #dbe3ee;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  max-width: 780px;
+}
+
+@media (max-width: 1050px) {
+  .summer-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .large-card,
+  .wide-card {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .summer-operations-page {
+    padding: 18px;
+  }
+
+  .summer-operations-title {
+    font-size: clamp(3rem, 16vw, 4.5rem);
+  }
+
+  .summer-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .large-card,
+  .wide-card {
+    grid-column: span 1;
+  }
+
+  .summer-metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
