@@ -17,9 +17,7 @@ export default function PlatformReturnPill({ onSignOut }) {
         type="button"
         className="platform-return-button signout"
         onClick={() => {
-          localStorage.clear()
-          sessionStorage.clear()
-          window.location.href = 'https://app.deepsitecontrol.com'
+          window.location.href = 'https://app.deepsitecontrol.com/login?signout=true'
         }}
       >
         Sign Out
