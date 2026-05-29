@@ -16,9 +16,7 @@ export default function PlatformReturnPill({ onSignOut }) {
       <button
         type="button"
         className="platform-return-button signout"
-        onClick={() => {
-          window.location.href = 'https://app.deepsitecontrol.com/login?signout=true'
-        }}
+        onClick={onSignOut}
       >
         Sign Out
       </button>

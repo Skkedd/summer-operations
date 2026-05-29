@@ -1,10 +1,16 @@
 import PlatformReturnPill from '../components/PlatformReturnPill'
 import '../styles/summer-operations.css'
+import { supabase } from '../lib/supabaseClient'
 
 export default function SummerOperationsHomePage() {
   return (
     <main className="summer-operations-page">
-      <PlatformReturnPill />
+      <PlatformReturnPill
+        onSignOut={async () => {
+          await supabase.auth.signOut()
+          window.location.href = 'https://app.deepsitecontrol.com'
+        }}
+      />
 
       <div className="summer-operations-hero">
         <div className="summer-operations-eyebrow">
