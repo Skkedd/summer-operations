@@ -85,9 +85,8 @@ export default function App() {
     );
   }, []);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-    window.location.href = 'https://app.deepsitecontrol.com'
+  function handleSignOut() {
+    window.location.href = 'https://app.deepsitecontrol.com/logout'
   }
 
   return (
