@@ -1,8 +1,27 @@
+import { useEffect } from 'react'
 import PlatformReturnPill from '../components/PlatformReturnPill'
 import '../styles/summer-operations.css'
 import { supabase } from '../lib/supabaseClient'
 
 export default function SummerOperationsHomePage() {
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('Summer auth error:', error)
+      }
+
+      if (!data.session) {
+        window.location.href =
+          'https://app.deepsitecontrol.com/login?redirect=/summer'
+        return
+      }
+    }
+
+  checkSession()
+  }, [])
+  
   return (
     <main className="summer-operations-page">
       <PlatformReturnPill
