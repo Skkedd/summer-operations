@@ -131,3 +131,8 @@
 .platform-return-pill.collapsed:hover {
   box-shadow: 0 0 46px rgba(245, 194, 66, .30);
 }
+
+.platform-return-pill {
+  transform: scale(0.75);
+  transform-origin: top right;
+}
