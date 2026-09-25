@@ -6,12 +6,18 @@ export function defineModuleManifest(manifest) {
   const identity = MODULES[manifest?.key]
   if (!identity || manifest?.name !== identity.name || manifest?.path !== identity.path ||
       !Array.isArray(manifest.artifactTypes) || !Array.isArray(manifest.eventKinds) ||
-      [...manifest.artifactTypes, ...manifest.eventKinds].some((item) => typeof item !== 'string' || !item)) {
+      (manifest.roleKeys !== undefined && !Array.isArray(manifest.roleKeys)) ||
+      (manifest.capabilityKeys !== undefined && !Array.isArray(manifest.capabilityKeys)) ||
+      [...manifest.artifactTypes, ...manifest.eventKinds,
+        ...(manifest.roleKeys || []), ...(manifest.capabilityKeys || [])]
+        .some((item) => typeof item !== 'string' || !item)) {
     throw new TypeError('Invalid Deep Site module manifest')
   }
   return Object.freeze({ ...manifest,
     artifactTypes: Object.freeze([...new Set(manifest.artifactTypes)]),
     eventKinds: Object.freeze([...new Set(manifest.eventKinds)]),
+    ...(manifest.roleKeys ? { roleKeys: Object.freeze([...new Set(manifest.roleKeys)]) } : {}),
+    ...(manifest.capabilityKeys ? { capabilityKeys: Object.freeze([...new Set(manifest.capabilityKeys)]) } : {}),
   })
 }
 
@@ -27,16 +33,16 @@ export function isArtifactReference(value) {
 }
 
 export function canDelegateSharingAuthority(actor) {
-  return actor?.role === 'site_admin' || actor?.role === 'org_admin'
+  return actor?.role === 'org_admin'
 }
 
 export function canGrantRestrictedArtifact({ actor, delegation, artifact, recipientId }) {
   if (!isArtifactReference(artifact) || !recipientId || actor?.organizationId !== artifact.organizationId) return false
   if (actor?.role === 'org_admin') return true
-  if (actor?.role === 'site_admin' && artifact.siteId && actor.siteIds?.includes(artifact.siteId)) return true
-  return Boolean(delegation?.active && delegation?.granteeId === actor?.id &&
+  return Boolean(delegation?.active === true && !delegation?.revokedAt &&
+    delegation?.granteeId === actor?.id &&
     delegation?.organizationId === artifact.organizationId &&
-    delegation?.grantedByAdminId && delegation?.scope?.includes(artifact.type) &&
+    delegation?.grantedByAdminId && delegation?.artifactTypes?.includes(artifact.type) &&
     (!artifact.siteId || delegation.siteIds?.includes(artifact.siteId)))
 }
 

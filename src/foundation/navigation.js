@@ -1,5 +1,14 @@
 export const PLATFORM_ORIGIN = 'https://app.deepsitecontrol.com'
 export const PLATFORM_HOME = `${PLATFORM_ORIGIN}/launcher`
+export const PLATFORM_PREVIEW_ORIGIN = 'https://deep-site-platform.vercel.app'
+
+export function platformOrigin(location = globalThis.location) {
+  return location?.origin === PLATFORM_PREVIEW_ORIGIN ? PLATFORM_PREVIEW_ORIGIN : PLATFORM_ORIGIN
+}
+
+export function platformHomeUrl() {
+  return `${platformOrigin()}/launcher`
+}
 
 export const MODULES = Object.freeze({
   platform: { key: 'platform', path: '/launcher', name: 'Deep Site Platform' },
@@ -11,7 +20,7 @@ export const MODULES = Object.freeze({
 
 const ALLOWED_ORIGINS = new Set([
   PLATFORM_ORIGIN,
-  'https://deep-site-platform.vercel.app',
+  PLATFORM_PREVIEW_ORIGIN,
   'https://operations-requests.vercel.app',
   'https://operations-journal.vercel.app',
   'https://summer-operations.vercel.app',
@@ -21,23 +30,23 @@ const ALLOWED_ORIGINS = new Set([
 
 export function moduleUrl(moduleKey) {
   const module = MODULES[moduleKey]
-  return module ? `${PLATFORM_ORIGIN}${module.path}` : PLATFORM_HOME
+  return module ? `${platformOrigin()}${module.path}` : platformHomeUrl()
 }
 
 export function canonicalModuleEntry(moduleKey, pathname = '/', search = '', hash = '') {
   const module = MODULES[moduleKey]
-  if (!module) return PLATFORM_HOME
+  if (!module) return platformHomeUrl()
   let suffix = pathname.startsWith('/') && !pathname.startsWith('//') ? pathname : '/'
   if (suffix === module.path || suffix === `${module.path}/`) suffix = ''
   else if (suffix.startsWith(`${module.path}/`)) suffix = suffix.slice(module.path.length)
   else if (suffix === '/') suffix = ''
-  return `${PLATFORM_ORIGIN}${module.path}${suffix}${search}${hash}`
+  return `${platformOrigin()}${module.path}${suffix}${search}${hash}`
 }
 
-export function safePlatformRedirect(value, fallback = PLATFORM_HOME) {
+export function safePlatformRedirect(value, fallback = platformHomeUrl()) {
   if (typeof value !== 'string' || !value || value.startsWith('//') || value.includes('\\')) return fallback
   try {
-    const url = new URL(value, PLATFORM_ORIGIN)
+    const url = new URL(value, platformOrigin())
     if (url.protocol !== 'https:' || !ALLOWED_ORIGINS.has(url.origin) || url.username || url.password) return fallback
     return url.href
   } catch {
@@ -46,5 +55,5 @@ export function safePlatformRedirect(value, fallback = PLATFORM_HOME) {
 }
 
 export function loginUrl(returnUrl) {
-  return `${PLATFORM_ORIGIN}/login?redirect=${encodeURIComponent(safePlatformRedirect(returnUrl))}`
+  return `${platformOrigin()}/login?redirect=${encodeURIComponent(safePlatformRedirect(returnUrl))}`
 }

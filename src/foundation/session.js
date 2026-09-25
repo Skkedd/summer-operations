@@ -1,4 +1,5 @@
-import { resolveModuleAccess, selectActiveOrganization } from './access.js'
+import { resolveModuleAccess, requiresOrganizationChoice, selectActiveOrganization } from './access.js'
+import { platformOrigin } from './navigation.js'
 
 export function getStoredOrganizationId(userId, storage = globalThis.localStorage) {
   if (!userId) return null
@@ -32,7 +33,7 @@ export function createFleetClient(createClient, url, anonKey) {
 export async function signOutAndReturn(client) {
   const { error } = await client.auth.signOut()
   if (error) return { ok: false, error }
-  globalThis.location.assign('https://app.deepsitecontrol.com/')
+  globalThis.location.assign(`${platformOrigin()}/`)
   return { ok: true }
 }
 
@@ -49,8 +50,7 @@ export async function resolveFleetSession(client, moduleKey, requestedOrganizati
   if (requestedOrganizationId && !organizations.some((org) => String(org.id) === String(requestedOrganizationId))) {
     return { state: 'forbidden', user, organizations }
   }
-  if (!requestedOrganizationId && organizations.length > 1 &&
-      (!storedId || !organizations.some((org) => String(org.id) === String(storedId)))) {
+  if (!requestedOrganizationId && requiresOrganizationChoice(organizations, storedId)) {
     return { state: 'choose_organization', user, organizations }
   }
   const organization = selectActiveOrganization(

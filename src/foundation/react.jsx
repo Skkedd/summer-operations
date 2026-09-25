@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { canonicalModuleEntry, moduleUrl, loginUrl, safePlatformRedirect, PLATFORM_HOME, PLATFORM_ORIGIN } from './navigation.js'
+import { canonicalModuleEntry, moduleUrl, loginUrl, safePlatformRedirect, platformHomeUrl, PLATFORM_ORIGIN } from './navigation.js'
 import { resolveFleetSession, signOutAndReturn } from './session.js'
 import { FleetContext } from './react-context.js'
 
@@ -73,7 +73,7 @@ export function FleetEntryGate({ client, moduleKey, children }) {
     <p>{result.state === 'forbidden' ? 'This app is not enabled for your current organization.' :
       result.state === 'no_organization' ? 'Your account is not assigned to an organization.' :
         'Your access could not be verified. Please try again.'}</p>
-    <a href={PLATFORM_HOME}>Organization Home</a>
+    <a href={platformHomeUrl()}>Organization Home</a>
     <button type="button" onClick={() => void signOutAndReturn(client)}>Sign out</button>
   </main>
 }
