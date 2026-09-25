@@ -46,7 +46,11 @@ export async function resolveFleetSession(client, moduleKey, requestedOrganizati
   if (orgError) return { state: 'error', user, error: orgError }
   const organizations = (orgRows || []).map(mapOrganization).filter(Boolean)
   const storedId = getStoredOrganizationId(user.id)
-  if (!requestedOrganizationId && !storedId && organizations.length > 1) {
+  if (requestedOrganizationId && !organizations.some((org) => String(org.id) === String(requestedOrganizationId))) {
+    return { state: 'forbidden', user, organizations }
+  }
+  if (!requestedOrganizationId && organizations.length > 1 &&
+      (!storedId || !organizations.some((org) => String(org.id) === String(storedId)))) {
     return { state: 'choose_organization', user, organizations }
   }
   const organization = selectActiveOrganization(

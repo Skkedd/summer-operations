@@ -1,6 +1,19 @@
-import { safePlatformRedirect } from './navigation.js'
+import { MODULES, safePlatformRedirect } from './navigation.js'
 
 export const CONTRACT_VERSION = 1
+
+export function defineModuleManifest(manifest) {
+  const identity = MODULES[manifest?.key]
+  if (!identity || manifest?.name !== identity.name || manifest?.path !== identity.path ||
+      !Array.isArray(manifest.artifactTypes) || !Array.isArray(manifest.eventKinds) ||
+      [...manifest.artifactTypes, ...manifest.eventKinds].some((item) => typeof item !== 'string' || !item)) {
+    throw new TypeError('Invalid Deep Site module manifest')
+  }
+  return Object.freeze({ ...manifest,
+    artifactTypes: Object.freeze([...new Set(manifest.artifactTypes)]),
+    eventKinds: Object.freeze([...new Set(manifest.eventKinds)]),
+  })
+}
 
 export function isArtifactReference(value) {
   return Boolean(value && value.version === CONTRACT_VERSION &&
