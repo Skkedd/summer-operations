@@ -268,6 +268,18 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
               <p>{event.title}</p>
               {event.kind === 'reminder' && <p>Reminder · {new Date(event.start_at) < new Date() ?
                 'Due' : 'Upcoming'}</p>}
+              {event.artifact_ref && <a href={fleetArtifactUrl(event.artifact_ref) ||
+                moduleUrl(event.artifact_ref.sourceModule)}>
+                Open {fleetArtifactLabel(event.artifact_ref)}</a>}
+              {fleetTargetUrl(event.target_path) &&
+                <a href={fleetTargetUrl(event.target_path)}>Open source</a>}
+              {event.kind === 'reminder' && event.owner_id === user?.id &&
+                !event.completed_at && !event.dismissed_at && <div className="fleet-reminder-actions">
+                  <button type="button" disabled={busy} onClick={() => void perform(() =>
+                    setFleetReminderState(client, event.id, 'complete'))}>Complete</button>
+                  <button type="button" disabled={busy} onClick={() => void perform(() =>
+                    setFleetReminderState(client, event.id, 'dismiss'))}>Dismiss</button>
+                </div>}
             </article>)}</div>
           <h3>Upcoming this month</h3>
           <div className="fleet-list">{monthlyEvents.length === 0 && <p>No events this month.</p>}
