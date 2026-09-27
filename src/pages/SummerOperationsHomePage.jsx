@@ -1,41 +1,10 @@
-import { useEffect, useState } from 'react'
-import PlatformReturnPill from '../components/PlatformReturnPill'
+
 import '../styles/summer-operations.css'
-import { supabase } from '../lib/supabaseClient'
 
 export default function SummerOperationsHomePage() {
-  const [isAuthChecking, setIsAuthChecking] = useState(true)
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error('Summer auth error:', error)
-      }
-
-      if (!data.session) {
-        window.location.href =
-          'https://app.deepsitecontrol.com/login?redirect=/summer'
-        return
-      }
-      setIsAuthChecking(false)
-    }
-
-  checkSession()
-  }, [])
-
-    if (isAuthChecking) {
-      return null
-    }
-
   return (
     <main className="summer-operations-page">
-      <PlatformReturnPill
-        onSignOut={async () => {
-          await supabase.auth.signOut()
-          window.location.href = 'https://app.deepsitecontrol.com'
-        }}
-      />
+
 
       <div className="summer-operations-hero">
         <div className="summer-operations-eyebrow">
@@ -47,26 +16,19 @@ export default function SummerOperationsHomePage() {
         </h1>
 
         <p className="summer-operations-subtitle">
-          Build, compare and optimize summer custodial staffing,
-          carpet scheduling, deep cleaning workflows and operational
-          timelines across district sites.
+          Preview a possible summer custodial planning experience. The figures
+          below are sample data; schedules and scenarios are not yet saved here.
         </p>
 
         <div className="summer-operations-actions">
-          <button className="primary-action">
-            Open Planning Dashboard
-          </button>
-
-          <button className="secondary-action">
-            Create Scenario
-          </button>
+          <span>Planning dashboard and scenario creation are in development.</span>
         </div>
       </div>
 
       <section className="summer-dashboard-grid">
         <div className="summer-card large-card">
           <div className="card-label">
-            ACTIVE SUMMER RUN
+            SAMPLE SUMMER RUN
           </div>
 
           <div className="card-title">
@@ -92,7 +54,7 @@ export default function SummerOperationsHomePage() {
         </div>
 
         <div className="summer-card">
-          <div className="card-label">PROJECTED FINISH</div>
+          <div className="card-label">SAMPLE PROJECTION</div>
           <div className="big-status">ON TRACK</div>
           <div className="small-text">
             Estimated completion before target deadline.
@@ -100,7 +62,7 @@ export default function SummerOperationsHomePage() {
         </div>
 
         <div className="summer-card">
-          <div className="card-label">STAFFING ALERTS</div>
+          <div className="card-label">SAMPLE STAFFING ALERTS</div>
           <div className="big-number">2</div>
           <div className="small-text">
             Idle crew gaps and room access conflicts detected.
@@ -108,7 +70,7 @@ export default function SummerOperationsHomePage() {
         </div>
 
         <div className="summer-card">
-          <div className="card-label">ACTIVE SITES</div>
+          <div className="card-label">SAMPLE SITES</div>
           <div className="big-number">3</div>
           <div className="small-text">
             Wright, RL Stevens and JX Wilson.

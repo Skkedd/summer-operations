@@ -1,0 +1,45 @@
+.fleet-root{position:fixed;right:20px;bottom:20px;z-index:11000;font:14px/1.4 system-ui,sans-serif;color:#e9eef6}
+.fleet-root *{box-sizing:border-box}
+.fleet-root button,.fleet-root input,.fleet-root select,.fleet-root textarea{font:inherit}
+.fleet-control{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #53677f;border-radius:999px;background:#102338;color:#f5f9ff;box-shadow:0 8px 28px #0006;cursor:pointer;font-weight:700}
+.fleet-control:hover,.fleet-control:focus-visible{background:#1d3955}
+.fleet-mark{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#40a0ed;color:#09213a;font-size:10px;font-weight:900}
+.fleet-count{display:grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#f59655;color:#192130;font-size:11px}
+.fleet-panel{position:absolute;right:0;bottom:52px;width:min(420px,calc(100vw - 24px));height:min(640px,calc(100vh - 90px));display:flex;flex-direction:column;border:1px solid #53677f;border-radius:18px;background:#142336;box-shadow:0 24px 70px #0009;overflow:hidden}
+.fleet-header{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;background:#1c3048;border-bottom:1px solid #41546b}
+.fleet-header strong{display:block;font-size:17px}
+.fleet-header small{display:block;color:#b9c8d9}
+.fleet-header button{border:0;background:transparent;color:#e9eef6;font-size:26px;cursor:pointer}
+.fleet-tabs{display:flex;gap:2px;padding:6px;border-bottom:1px solid #41546b;overflow-x:auto}
+.fleet-tabs button{padding:7px 8px;border:0;border-radius:8px;background:transparent;color:#cad7e5;cursor:pointer;text-transform:capitalize;white-space:nowrap}
+.fleet-tabs button[aria-current=page]{background:#315578;color:white}
+.fleet-content{padding:18px;overflow-y:auto;flex:1}
+.fleet-content h2{margin:0 0 8px;font-size:23px;color:#fff}
+.fleet-content h3{margin:23px 0 8px;font-size:15px;color:#dbeafe}
+.fleet-content p{color:#d3dce8}
+.fleet-content a{color:#9dd4ff}
+.fleet-primary{display:inline-block;margin:6px 0;padding:9px 12px;border-radius:9px;background:#2973af;color:white!important;text-decoration:none;font-weight:700}
+.fleet-apps,.fleet-summary{display:flex;flex-wrap:wrap;gap:7px}
+.fleet-apps a,.fleet-summary button{padding:7px 9px;border:1px solid #51708d;border-radius:9px;background:#213a55;color:#eaf4ff;text-decoration:none;cursor:pointer}
+.fleet-list{display:grid;gap:8px;max-height:260px;overflow-y:auto;margin:12px 0}
+.fleet-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:10px 0}
+.fleet-calendar-grid strong,.fleet-calendar-grid span,.fleet-calendar-grid button{min-height:35px;display:grid;place-items:center;text-align:center}
+.fleet-calendar-grid strong{font-size:10px;color:#a9c6df}
+.fleet-calendar-grid button{border:1px solid #405b76;border-radius:6px;background:#1d3550;color:white;cursor:pointer;font-size:12px}
+.fleet-calendar-grid button[aria-pressed=true]{border-color:#8bd0ff;background:#315f86}
+.fleet-calendar-grid button small{font-size:9px;color:#cde9ff}
+.fleet-item{padding:11px;border:1px solid #405b76;border-radius:10px;background:#1a3048}
+.fleet-item p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.fleet-item small{color:#b7cce0}
+.fleet-item button{margin-left:8px;padding:4px 7px;border:1px solid #6787a5;border-radius:6px;background:#274766;color:white;cursor:pointer}
+.fleet-form{display:grid;gap:10px;margin-top:10px}
+.fleet-content label{display:grid;gap:4px;margin:8px 0;color:#e2edf8;font-weight:600}
+.fleet-content input,.fleet-content select,.fleet-content textarea{width:100%;padding:8px;border:1px solid #62809d;border-radius:8px;background:#0e1e30;color:white}
+.fleet-content textarea{min-height:80px;resize:vertical}
+.fleet-content .fleet-inline{display:flex;align-items:center;gap:7px;font-weight:400}
+.fleet-inline input{width:auto}
+.fleet-form button,.fleet-content>button{justify-self:start;padding:8px 12px;border:0;border-radius:8px;background:#2c82bf;color:white;cursor:pointer;font-weight:700}
+.fleet-root button:disabled{opacity:.55;cursor:not-allowed}
+.fleet-error{padding:9px;border:1px solid #bb5555;border-radius:7px;background:#552a35;color:#fff!important}
+@media(max-width:480px){.fleet-root{right:12px;bottom:12px}.fleet-panel{bottom:48px}}
+.fleet-artifact-card{display:grid;gap:5px;margin:8px 0;padding:9px;border:1px solid #6391b6;border-radius:8px;background:#233f59}.fleet-artifact-card small{display:block}.fleet-artifact-card a{justify-self:start}
