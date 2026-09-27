@@ -144,10 +144,10 @@ export interface FleetMessage {
 export interface MessageToAppAction {
   messageId: string
   organizationId: OrganizationId
+  recipientId: UserId
   targetModule: ModuleKey
   action: string
-  sourceArtifact?: ArtifactReference
-  context: Record<string, unknown>
+  sourceArtifact: Partial<ArtifactReference> | null
   // The target module validates this and creates a reviewable draft.
   execution: 'reviewable_draft'
 }
@@ -233,6 +233,7 @@ export function opaqueArtifactReference(reference: ArtifactReference, organizati
 }
 export function fleetTargetUrl(path: unknown): string | null
 export function fleetArtifactUrl(reference: Partial<ArtifactReference> | null): string | null
+export function fleetArtifactLabel(reference: Partial<ArtifactReference> | null): string
 export interface FleetMessageRow {
   id: string
   organization_id: OrganizationId
@@ -250,6 +251,7 @@ export interface FleetAttentionRow {
   source_id: string
   title: string
   target_path: string
+  artifact_ref: Partial<ArtifactReference> | null
   created_at: string
   read_at: string | null
 }
@@ -262,6 +264,10 @@ export interface FleetCalendarRow {
   visibility: 'personal' | 'organization'
   source_module: ModuleKey
   target_path: string | null
+  kind: 'event' | 'reminder' | 'product_event'
+  artifact_ref: Partial<ArtifactReference> | null
+  completed_at: string | null
+  dismissed_at: string | null
 }
 export interface FleetRecipient { user_id: UserId; email: string }
 export function loadFleetSnapshot(client: unknown, organizationId: OrganizationId): Promise<{
@@ -279,7 +285,12 @@ export function markFleetAttentionRead(client: unknown, id: string): Promise<boo
 export function createFleetEvent(client: unknown, input: {
   organizationId: OrganizationId; ownerId: UserId; title: string
   startAt: string; endAt: string; visibility?: 'personal' | 'organization'
+  kind?: 'event' | 'reminder'; artifact?: ArtifactReference | null
 }): Promise<{ id: string }>
+export function setFleetReminderState(client: unknown, id: string, state: 'complete' | 'dismiss'): Promise<boolean>
+export function makeMessageToAppAction(message: FleetMessageRow, organizationId: OrganizationId,
+  recipientId: UserId, targetModule: ModuleKey, action: string): Readonly<MessageToAppAction>
+export function canDraftJournalFromMessage(message: FleetMessageRow): boolean
 export function canDelegateSharingAuthority(actor: { role?: string } | null): boolean
 export function canGrantRestrictedArtifact(input: {
   actor: { id: UserId; role: string; organizationId: OrganizationId; siteIds?: string[] }
@@ -287,3 +298,24 @@ export function canGrantRestrictedArtifact(input: {
   artifact: ArtifactReference
   recipientId: UserId
 }): boolean
+
+export interface ExternalCalendarEvent {
+  provider: string
+  externalId: string
+  connectionId: string
+  title: string
+  startAt: string
+  endAt: string
+  timeZone: string
+  sourceUrl?: string
+}
+
+export interface ExternalCalendarAdapter {
+  readonly provider: string
+  listWindow(input: {
+    organizationId: OrganizationId
+    connectionId: string
+    startAt: string
+    endAt: string
+  }): Promise<readonly ExternalCalendarEvent[]>
+}

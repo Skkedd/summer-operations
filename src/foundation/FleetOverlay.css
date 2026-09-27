@@ -42,3 +42,4 @@
 .fleet-root button:disabled{opacity:.55;cursor:not-allowed}
 .fleet-error{padding:9px;border:1px solid #bb5555;border-radius:7px;background:#552a35;color:#fff!important}
 @media(max-width:480px){.fleet-root{right:12px;bottom:12px}.fleet-panel{bottom:48px}}
+.fleet-artifact-card{display:grid;gap:5px;margin:8px 0;padding:9px;border:1px solid #6391b6;border-radius:8px;background:#233f59}.fleet-artifact-card small{display:block}.fleet-artifact-card a{justify-self:start}

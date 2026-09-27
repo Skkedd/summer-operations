@@ -9,5 +9,5 @@ export function FleetOverlay(props: {
   onSignOut?: () => Promise<unknown> | void
   currentArtifact?: ArtifactReference | null
   startView?: 'home' | 'messages' | 'attention' | 'calendar' | 'account' | null
-  onDraftFromMessage?: ((message: import('./types.js').FleetMessageRow) => void) | null
+  onDraftFromMessage?: ((message: import('./types.js').MessageToAppAction) => void) | null
 }): ReactNode
