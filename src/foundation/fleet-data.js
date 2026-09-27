@@ -59,15 +59,26 @@ export function fleetArtifactLabel(reference) {
     `${reference?.sourceModule || 'Product'} artifact`
 }
 
-export async function loadFleetSnapshot(client, organizationId) {
+export async function loadFleetSnapshot(client, organizationId, calendarMonth = null) {
   requireOrganization(organizationId)
+  const month = calendarMonth || (() => {
+    const today = new Date()
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  })()
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || Number(month.slice(0, 4)) < 1000) {
+    throw new TypeError('Choose a valid calendar month')
+  }
+  const [year, monthNumber] = month.split('-').map(Number)
+  const monthStart = new Date(year, monthNumber - 1, 1).toISOString()
+  const nextMonth = new Date(year, monthNumber, 1).toISOString()
   const [messages, attention, events, reminders, recipients] = await Promise.all([
     client.from('fleet_messages').select('id,organization_id,sender_id,recipient_id,body,artifact_ref,created_at,read_at')
       .eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(100),
     client.from('fleet_attention').select('id,source_module,kind,source_id,title,target_path,artifact_ref,created_at,read_at')
       .eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(100),
     client.from('fleet_calendar_events').select('id,owner_id,title,start_at,end_at,visibility,source_module,target_path,kind,artifact_ref,completed_at,dismissed_at')
-      .eq('organization_id', organizationId).gte('end_at', new Date().toISOString())
+      .eq('organization_id', organizationId).gte('end_at', monthStart)
+      .lt('start_at', nextMonth)
       .order('start_at', { ascending: true }).limit(100),
     client.from('fleet_calendar_events').select('id,owner_id,title,start_at,end_at,visibility,source_module,target_path,kind,artifact_ref,completed_at,dismissed_at')
       .eq('organization_id', organizationId).eq('kind', 'reminder')

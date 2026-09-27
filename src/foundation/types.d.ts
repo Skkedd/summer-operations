@@ -270,7 +270,8 @@ export interface FleetCalendarRow {
   dismissed_at: string | null
 }
 export interface FleetRecipient { user_id: UserId; email: string }
-export function loadFleetSnapshot(client: unknown, organizationId: OrganizationId): Promise<{
+export function loadFleetSnapshot(client: unknown, organizationId: OrganizationId,
+  calendarMonth?: string | null): Promise<{
   messages: FleetMessageRow[]
   attention: FleetAttentionRow[]
   events: FleetCalendarRow[]

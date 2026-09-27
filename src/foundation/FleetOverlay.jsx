@@ -51,7 +51,7 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
     let live = true
     const reload = () => {
       if (document.hidden) return
-      loadFleetSnapshot(client, organization.id).then(data => {
+      loadFleetSnapshot(client, organization.id, calendarMonth).then(data => {
         if (live) { setSnapshot(data); setError(''); setLoading(false) }
       }).catch(cause => {
         if (live) { setError(cause.message || 'Fleet data could not be loaded.'); setLoading(false) }
@@ -65,7 +65,7 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
       window.clearInterval(timer)
       document.removeEventListener('visibilitychange', reload)
     }
-  }, [client, open, organization?.id, user?.id])
+  }, [client, open, organization?.id, user?.id, calendarMonth])
 
   useEffect(() => {
     if (!open) return undefined
@@ -93,7 +93,7 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
     currentArtifact.organizationId === organization?.id)
 
   async function refresh() {
-    setSnapshot(await loadFleetSnapshot(client, organization.id))
+    setSnapshot(await loadFleetSnapshot(client, organization.id, calendarMonth))
   }
 
   async function perform(action) {
