@@ -234,6 +234,8 @@ export function opaqueArtifactReference(reference: ArtifactReference, organizati
 export function fleetTargetUrl(path: unknown): string | null
 export function fleetArtifactUrl(reference: Partial<ArtifactReference> | null): string | null
 export function fleetArtifactLabel(reference: Partial<ArtifactReference> | null): string
+export function calendarEventOccursOnDay(event: Partial<FleetCalendarRow>, day: string): boolean
+export function calendarEventOverlapsMonth(event: Partial<FleetCalendarRow>, month: string): boolean
 export interface FleetMessageRow {
   id: string
   organization_id: OrganizationId
@@ -277,6 +279,8 @@ export function loadFleetSnapshot(client: unknown, organizationId: OrganizationI
   events: FleetCalendarRow[]
   recipients: FleetRecipient[]
 }>
+export function loadFleetConversation(client: unknown, organizationId: OrganizationId,
+  userId: UserId, colleagueId: UserId): Promise<FleetMessageRow[]>
 export function sendFleetMessage(client: unknown, input: {
   organizationId: OrganizationId; senderId: UserId; recipientId: UserId
   body: string; artifact?: ArtifactReference | null

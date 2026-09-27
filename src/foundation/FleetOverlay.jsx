@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isArtifactReference } from './contracts.js'
 import { moduleUrl, platformHomeUrl } from './navigation.js'
-import { canDraftJournalFromMessage, createFleetEvent, fleetArtifactLabel, fleetArtifactUrl,
-  fleetTargetUrl, loadFleetSnapshot, makeMessageToAppAction,
+import { calendarEventOccursOnDay, calendarEventOverlapsMonth,
+  canDraftJournalFromMessage, createFleetEvent, fleetArtifactLabel, fleetArtifactUrl,
+  fleetTargetUrl, loadFleetConversation, loadFleetSnapshot, makeMessageToAppAction,
   markFleetAttentionRead, markFleetMessageRead, sendFleetMessage,
   setFleetReminderState } from './fleet-data.js'
 import './FleetOverlay.css'
@@ -25,6 +26,12 @@ function initialView() {
   } catch { return 'home' }
 }
 
+function ArtifactLink({ reference, label }) {
+  const url = fleetArtifactUrl(reference)
+  return url ? <a href={url}>{label}</a> :
+    <small>This artifact has no supported direct link yet.</small>
+}
+
 export function FleetOverlay({ client, organization, user, modules = [], onSignOut,
   currentArtifact = null, startView = null, onDraftFromMessage = null }) {
   const firstView = VIEWS.has(startView) ? startView : initialView()
@@ -35,6 +42,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [recipientId, setRecipientId] = useState('')
+  const [conversation, setConversation] = useState([])
+  const [conversationLoading, setConversationLoading] = useState(false)
   const [body, setBody] = useState('')
   const [attachCurrent, setAttachCurrent] = useState(false)
   const [eventTitle, setEventTitle] = useState('')
@@ -77,18 +86,28 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
   const unreadMessages = snapshot.messages.filter(message =>
     message.recipient_id === user?.id && !message.read_at).length
   const unreadAttention = snapshot.attention.filter(item => !item.read_at).length
-  const conversation = useMemo(() => snapshot.messages.filter(message =>
-    message.sender_id === recipientId || message.recipient_id === recipientId)
-    .sort((a, b) => a.created_at.localeCompare(b.created_at)),
-  [snapshot.messages, recipientId])
+  useEffect(() => {
+    if (!recipientId || !organization?.id || !user?.id) return undefined
+    let live = true
+    loadFleetConversation(client, organization.id, user.id, recipientId)
+      .then(rows => { if (live) { setConversation(rows); setConversationLoading(false) } })
+      .catch(cause => {
+        if (live) { setError(cause.message || 'Conversation could not be loaded.');
+          setConversationLoading(false) }
+      })
+    return () => { live = false }
+  }, [client, organization?.id, user?.id, recipientId, snapshot.messages])
   const dueReminders = snapshot.events.filter(event => event.kind === 'reminder' &&
     !event.completed_at && !event.dismissed_at && new Date(event.start_at) <= new Date())
+  const pendingCount = unreadAttention + dueReminders.filter(reminder =>
+    !snapshot.attention.some(item => !item.read_at && item.kind === 'reminder_due' &&
+      item.source_id === reminder.id)).length
   const monthlyEvents = snapshot.events.filter(event =>
-    localDay(event.start_at).slice(0, 7) === calendarMonth)
+    calendarEventOverlapsMonth(event, calendarMonth))
   const [year, month] = calendarMonth.split('-').map(Number)
   const firstWeekday = new Date(year, month - 1, 1).getDay()
   const daysInMonth = new Date(year, month, 0).getDate()
-  const dayEvents = monthlyEvents.filter(event => localDay(event.start_at) === selectedDay)
+  const dayEvents = monthlyEvents.filter(event => calendarEventOccursOnDay(event, selectedDay))
   const canAttach = Boolean(currentArtifact && isArtifactReference(currentArtifact) &&
     currentArtifact.organizationId === organization?.id)
 
@@ -138,7 +157,7 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
     <button type="button" className="fleet-control" aria-label="Open Deep Site fleet"
       aria-expanded={open} onClick={() => open ? setOpen(false) : openPanel()}>
       <span className="fleet-mark">DS</span><span>Deep Site</span>
-      {unreadAttention + dueReminders.length > 0 && <span className="fleet-count">{unreadAttention + dueReminders.length}</span>}
+      {pendingCount > 0 && <span className="fleet-count">{pendingCount}</span>}
     </button>
     {open && <div className="fleet-panel" role="dialog" aria-modal="false"
       aria-label="Deep Site fleet overlay">
@@ -172,24 +191,28 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
         {view === 'messages' && <>
           <h2>Messages</h2>
           <label>Colleague
-            <select value={recipientId} onChange={event => setRecipientId(event.target.value)}>
+            <select value={recipientId} onChange={event => {
+              setRecipientId(event.target.value)
+              setConversation([])
+              setConversationLoading(Boolean(event.target.value))
+              setError('')
+            }}>
               <option value="">Choose a colleague</option>
               {snapshot.recipients.map(person =>
                 <option key={person.user_id} value={person.user_id}>{person.email}</option>)}
             </select>
           </label>
           <div className="fleet-list" aria-live="polite">
-            {recipientId && conversation.length === 0 && <p>No messages yet.</p>}
+            {conversationLoading && <p role="status">Loading conversation…</p>}
+            {recipientId && !conversationLoading && conversation.length === 0 && <p>No messages yet.</p>}
+            {conversation.length === 100 && <small>Showing the latest 100 messages.</small>}
             {conversation.map(message => <article key={message.id} className="fleet-item">
               <small>{message.sender_id === user.id ? 'You' : 'Colleague'} · {when(message.created_at)}</small>
               <p>{message.body}</p>
               {message.artifact_ref && <div className="fleet-artifact-card">
                 <strong>{fleetArtifactLabel(message.artifact_ref)}</strong>
                 <small>Shared from {message.artifact_ref.sourceModule}. The owning app checks current access.</small>
-                <a href={fleetArtifactUrl(message.artifact_ref) ||
-                  moduleUrl(message.artifact_ref.sourceModule)}>
-                  {fleetArtifactUrl(message.artifact_ref) ? 'Open artifact' : 'Open owning app'}
-                </a>
+                <ArtifactLink reference={message.artifact_ref} label="Open artifact" />
               </div>}
               {message.recipient_id === user.id && !message.read_at &&
                 <button type="button" disabled={busy} onClick={() => void perform(() =>
@@ -218,9 +241,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
             {snapshot.attention.map(item => <article key={item.id} className="fleet-item">
               <small>{item.source_module} · {when(item.created_at)}</small>
               <p>{item.title}</p>
-              {item.artifact_ref && <p><a href={fleetArtifactUrl(item.artifact_ref) ||
-                moduleUrl(item.artifact_ref.sourceModule)}>
-                Open {fleetArtifactLabel(item.artifact_ref)}</a></p>}
+              {item.artifact_ref && <p><ArtifactLink reference={item.artifact_ref}
+                label={`Open ${fleetArtifactLabel(item.artifact_ref)}`} /></p>}
               {fleetTargetUrl(item.target_path) &&
                 <a href={fleetTargetUrl(item.target_path)}>Open</a>}
               {!item.read_at && <button type="button" disabled={busy}
@@ -233,8 +255,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
           <div className="fleet-list">{dueReminders.length === 0 && <p>Nothing due.</p>}
             {dueReminders.map(item => <article key={item.id} className="fleet-item">
               <small>Due {when(item.start_at)}</small><p>{item.title}</p>
-              {item.artifact_ref && <a href={fleetArtifactUrl(item.artifact_ref) ||
-                moduleUrl(item.artifact_ref.sourceModule)}>Open related artifact</a>}
+              {item.artifact_ref && <ArtifactLink reference={item.artifact_ref}
+                label="Open related artifact" />}
               {item.owner_id === user?.id && <div className="fleet-reminder-actions">
                 <button type="button" disabled={busy} onClick={() => void perform(() =>
                   setFleetReminderState(client, item.id, 'complete'))}>Complete</button>
@@ -254,7 +276,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
               <span key={`blank-${index}`} />)}
             {Array.from({ length: daysInMonth }, (_, index) => {
               const day = `${calendarMonth}-${String(index + 1).padStart(2, '0')}`
-              const count = monthlyEvents.filter(item => localDay(item.start_at) === day).length
+              const count = monthlyEvents.filter(item =>
+                calendarEventOccursOnDay(item, day)).length
               return <button key={day} type="button" aria-label={`${day}, ${count} events`}
                 aria-pressed={selectedDay === day} onClick={() => setSelectedDay(day)}>
                 {index + 1}{count > 0 && <small>· {count}</small>}
@@ -268,9 +291,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
               <p>{event.title}</p>
               {event.kind === 'reminder' && <p>Reminder · {new Date(event.start_at) < new Date() ?
                 'Due' : 'Upcoming'}</p>}
-              {event.artifact_ref && <a href={fleetArtifactUrl(event.artifact_ref) ||
-                moduleUrl(event.artifact_ref.sourceModule)}>
-                Open {fleetArtifactLabel(event.artifact_ref)}</a>}
+              {event.artifact_ref && <ArtifactLink reference={event.artifact_ref}
+                label={`Open ${fleetArtifactLabel(event.artifact_ref)}`} />}
               {fleetTargetUrl(event.target_path) &&
                 <a href={fleetTargetUrl(event.target_path)}>Open source</a>}
               {event.kind === 'reminder' && event.owner_id === user?.id &&
@@ -286,9 +308,8 @@ export function FleetOverlay({ client, organization, user, modules = [], onSignO
             {monthlyEvents.map(event => <article key={event.id} className="fleet-item">
               <small>{when(event.start_at)} · {event.source_module} · {event.visibility}</small>
               <p>{event.title}</p>
-              {event.artifact_ref && <a href={fleetArtifactUrl(event.artifact_ref) ||
-                moduleUrl(event.artifact_ref.sourceModule)}>
-                Open {fleetArtifactLabel(event.artifact_ref)}</a>}
+              {event.artifact_ref && <ArtifactLink reference={event.artifact_ref}
+                label={`Open ${fleetArtifactLabel(event.artifact_ref)}`} />}
               {fleetTargetUrl(event.target_path) &&
                 <a href={fleetTargetUrl(event.target_path)}>Open source</a>}
               {event.kind === 'reminder' && event.owner_id === user?.id &&

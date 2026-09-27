@@ -1,5 +1,5 @@
 import { isArtifactReference } from './contracts.js'
-import { moduleUrl, platformOrigin, safePlatformRedirect } from './navigation.js'
+import { MODULES, moduleUrl, platformOrigin, safePlatformRedirect } from './navigation.js'
 
 function requireOrganization(organizationId) {
   if (typeof organizationId !== 'string' || !organizationId) {
@@ -29,7 +29,12 @@ export function opaqueArtifactReference(reference, organizationId) {
 export function fleetTargetUrl(path) {
   if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//') ||
       path.includes('\\')) return null
-  return safePlatformRedirect(`${platformOrigin()}${path}`, null)
+  try {
+    const target = new URL(path, platformOrigin())
+    if (!Object.values(MODULES).some(module => target.pathname === module.path ||
+        target.pathname.startsWith(`${module.path}/`))) return null
+    return safePlatformRedirect(target.href, null)
+  } catch { return null }
 }
 
 export function fleetArtifactUrl(reference) {
@@ -47,13 +52,20 @@ export function fleetArtifactUrl(reference) {
       fleetSite: reference.siteId })
     return `${moduleUrl('deep_site')}?${query}`
   }
+  if (reference.sourceModule === 'deep_site' && reference.type === 'asset' &&
+      uuid.test(reference.siteId || '')) {
+    const query = new URLSearchParams({ fleetArtifact: 'asset',
+      fleetId: reference.id, fleetOrg: reference.organizationId,
+      fleetSite: reference.siteId })
+    return `${moduleUrl('deep_site')}?${query}`
+  }
   return null
 }
 
 export function fleetArtifactLabel(reference) {
   const labels = {
     journal: { entry: 'Journal entry' },
-    deep_site: { site_anchor: 'Deep Site location' },
+    deep_site: { site_anchor: 'Deep Site location', asset: 'Deep Site asset' },
   }
   return labels[reference?.sourceModule]?.[reference?.type] ||
     `${reference?.sourceModule || 'Product'} artifact`
@@ -71,6 +83,9 @@ export async function loadFleetSnapshot(client, organizationId, calendarMonth = 
   const [year, monthNumber] = month.split('-').map(Number)
   const monthStart = new Date(year, monthNumber - 1, 1).toISOString()
   const nextMonth = new Date(year, monthNumber, 1).toISOString()
+  unwrap(await client.rpc('refresh_due_fleet_reminder_attention', {
+    p_organization_id: organizationId,
+  }))
   const [messages, attention, events, reminders, recipients] = await Promise.all([
     client.from('fleet_messages').select('id,organization_id,sender_id,recipient_id,body,artifact_ref,created_at,read_at')
       .eq('organization_id', organizationId).order('created_at', { ascending: false }).limit(100),
@@ -93,6 +108,45 @@ export async function loadFleetSnapshot(client, organizationId, calendarMonth = 
     .sort((a, b) => a.start_at.localeCompare(b.start_at))
   return { messages: unwrap(messages) || [], attention: unwrap(attention) || [],
     events: visibleEvents, recipients: unwrap(recipients) || [] }
+}
+
+function eventOverlapsWindow(event, windowStart, windowEnd) {
+  const start = new Date(event?.start_at)
+  const end = new Date(event?.end_at)
+  if (!Number.isFinite(start.valueOf()) || !Number.isFinite(end.valueOf())) return false
+  if (end <= start) return start >= windowStart && start < windowEnd
+  return start < windowEnd && end > windowStart
+}
+
+export function calendarEventOccursOnDay(event, day) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || '')) return false
+  const [year, month, date] = day.split('-').map(Number)
+  const first = new Date(year, month - 1, date)
+  if (first.getFullYear() !== year || first.getMonth() !== month - 1 ||
+      first.getDate() !== date) return false
+  return eventOverlapsWindow(event, first, new Date(year, month - 1, date + 1))
+}
+
+export function calendarEventOverlapsMonth(event, month) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) return false
+  const [year, number] = month.split('-').map(Number)
+  return eventOverlapsWindow(event, new Date(year, number - 1, 1),
+    new Date(year, number, 1))
+}
+
+export async function loadFleetConversation(client, organizationId, userId, colleagueId) {
+  requireOrganization(organizationId)
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuid.test(userId || '') || !uuid.test(colleagueId || '') || userId === colleagueId) {
+    throw new TypeError('Choose a valid colleague')
+  }
+  const pair = `and(sender_id.eq.${userId},recipient_id.eq.${colleagueId}),` +
+    `and(sender_id.eq.${colleagueId},recipient_id.eq.${userId})`
+  const rows = unwrap(await client.from('fleet_messages')
+    .select('id,organization_id,sender_id,recipient_id,body,artifact_ref,created_at,read_at')
+    .eq('organization_id', organizationId).or(pair)
+    .order('created_at', { ascending: false }).limit(100)) || []
+  return rows.reverse()
 }
 
 export async function sendFleetMessage(client, { organizationId, senderId, recipientId, body,
