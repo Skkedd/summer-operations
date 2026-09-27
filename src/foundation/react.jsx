@@ -22,9 +22,9 @@ export function FleetEntryGate({ client, moduleKey, assignmentMode = 'compatibil
 
     let active = true
     let checkId = 0
-    async function check({ preserveAuthorized = false } = {}) {
+    async function check() {
       const currentCheckId = ++checkId
-      if (!preserveAuthorized) setResult({ state: 'loading' })
+      setResult({ state: 'loading' })
       try {
         const next = await resolveFleetSession(client, moduleKey, selectedOrganizationId,
           { assignmentMode })
@@ -35,15 +35,22 @@ export function FleetEntryGate({ client, moduleKey, assignmentMode = 'compatibil
     }
     void check()
     const { data: { subscription } } = client.auth.onAuthStateChange(() => {
+      // Hide the previous actor's authorized view before the next access check starts.
+      checkId += 1
+      setResult({ state: 'loading' })
       setTimeout(() => { if (active) void check() }, 0)
     })
     const onStorage = (event) => {
       if (event.key?.startsWith('dsc-active-org:')) {
-        if (selectedOrganizationId) setSelectedOrganizationId(null)
+        if (selectedOrganizationId) {
+          checkId += 1
+          setResult({ state: 'loading' })
+          setSelectedOrganizationId(null)
+        }
         else void check()
       }
     }
-    const onFocus = () => { if (active) void check({ preserveAuthorized: true }) }
+    const onFocus = () => { if (active) void check() }
     window.addEventListener('storage', onStorage)
     window.addEventListener('focus', onFocus)
     return () => {
@@ -63,7 +70,7 @@ export function FleetEntryGate({ client, moduleKey, assignmentMode = 'compatibil
   if (result.state === 'authorized') {
     return <FleetContext.Provider value={result}>
       {children}
-      {showOverlay && <FleetOverlay key={result.organization.id} client={client}
+      {showOverlay && <FleetOverlay key={`${result.user.id}:${result.organization.id}`} client={client}
         organization={result.organization} user={result.user}
         modules={result.modules || []}
         currentArtifact={currentArtifact}
