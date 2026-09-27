@@ -1,10 +1,10 @@
-import PlatformReturnPill from '../components/PlatformReturnPill'
+
 import '../styles/summer-operations.css'
 
 export default function SummerOperationsHomePage() {
   return (
     <main className="summer-operations-page">
-      <PlatformReturnPill />
+
 
       <div className="summer-operations-hero">
         <div className="summer-operations-eyebrow">

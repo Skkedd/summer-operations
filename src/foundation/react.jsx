@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { canonicalModuleEntry, moduleUrl, loginUrl, safePlatformRedirect, platformHomeUrl, PLATFORM_ORIGIN } from './navigation.js'
 import { resolveFleetSession, signOutAndReturn } from './session.js'
 import { FleetContext } from './react-context.js'
+import { FleetOverlay } from './FleetOverlay.jsx'
 
-export function FleetEntryGate({ client, moduleKey, children }) {
+export function FleetEntryGate({ client, moduleKey, assignmentMode = 'compatibility',
+  currentArtifact = null, showOverlay = true, children }) {
   const [result, setResult] = useState({ state: 'loading' })
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(null)
 
@@ -24,7 +26,8 @@ export function FleetEntryGate({ client, moduleKey, children }) {
       const currentCheckId = ++checkId
       if (!preserveAuthorized) setResult({ state: 'loading' })
       try {
-        const next = await resolveFleetSession(client, moduleKey, selectedOrganizationId)
+        const next = await resolveFleetSession(client, moduleKey, selectedOrganizationId,
+          { assignmentMode })
         if (active && currentCheckId === checkId) setResult(next)
       } catch (error) {
         if (active && currentCheckId === checkId) setResult({ state: 'error', error })
@@ -49,7 +52,7 @@ export function FleetEntryGate({ client, moduleKey, children }) {
       window.removeEventListener('storage', onStorage)
       window.removeEventListener('focus', onFocus)
     }
-  }, [client, moduleKey, selectedOrganizationId])
+  }, [client, moduleKey, assignmentMode, selectedOrganizationId])
 
   useEffect(() => {
     if (result.state === 'unauthenticated') {
@@ -58,7 +61,14 @@ export function FleetEntryGate({ client, moduleKey, children }) {
   }, [result.state, moduleKey])
 
   if (result.state === 'authorized') {
-    return <FleetContext.Provider value={result}>{children}</FleetContext.Provider>
+    return <FleetContext.Provider value={result}>
+      {children}
+      {showOverlay && <FleetOverlay key={result.organization.id} client={client}
+        organization={result.organization} user={result.user}
+        modules={result.modules || []}
+        currentArtifact={currentArtifact}
+        onSignOut={() => signOutAndReturn(client)} />}
+    </FleetContext.Provider>
   }
   if (result.state === 'loading') return <div role="status">Checking Deep Site access…</div>
   if (result.state === 'unauthenticated') {

@@ -39,7 +39,11 @@ export async function signOutAndReturn(client) {
 
 // Client entry guard improves routing and UX. Backend RLS must independently
 // enforce the same organization, entitlement and user boundaries.
-export async function resolveFleetSession(client, moduleKey, requestedOrganizationId) {
+export async function resolveFleetSession(client, moduleKey, requestedOrganizationId, options = {}) {
+  const assignmentMode = options.assignmentMode ?? 'compatibility'
+  if (assignmentMode !== 'compatibility' && assignmentMode !== 'explicit') {
+    throw new TypeError('Unknown Deep Site assignment mode')
+  }
   const { data: userData, error: userError } = await client.auth.getUser()
   if (userError || !userData?.user) return { state: 'unauthenticated', error: userError || null }
   const user = userData.user
@@ -57,15 +61,19 @@ export async function resolveFleetSession(client, moduleKey, requestedOrganizati
     organizations, requestedOrganizationId, storedId)
   if (!organization) return { state: 'no_organization', user, organizations }
 
+  const userAccessQuery = assignmentMode === 'explicit'
+    ? client.from('organization_user_module_assignments')
+      .select('organization_id,user_id,module_key,role,enabled')
+      .eq('organization_id', organization.id).eq('user_id', user.id)
+    : client.from('user_module_access').select('organization_id,module_key,role,enabled')
+      .eq('user_id', user.id).eq('organization_id', organization.id)
   const [membershipResult, moduleResult, entitlementResult, userAccessResult] = await Promise.all([
     client.from('organization_memberships').select('organization_id,platform_role,status')
       .eq('user_id', user.id).eq('organization_id', organization.id).eq('status', 'active'),
-    client.from('platform_modules').select('key,name,description,route,status,sort_order')
-      .eq('key', moduleKey),
+    client.from('platform_modules').select('key,name,description,route,status,sort_order'),
     client.from('organization_modules').select('organization_id,module_key,enabled')
-      .eq('organization_id', organization.id).eq('module_key', moduleKey),
-    client.from('user_module_access').select('organization_id,module_key,role,enabled')
-      .eq('user_id', user.id).eq('organization_id', organization.id).eq('module_key', moduleKey),
+      .eq('organization_id', organization.id),
+    userAccessQuery,
   ])
   const error = [membershipResult, moduleResult, entitlementResult, userAccessResult]
     .find((result) => result.error)?.error
@@ -76,10 +84,12 @@ export async function resolveFleetSession(client, moduleKey, requestedOrganizati
     modules: moduleResult.data || [],
     organizationModules: entitlementResult.data || [],
     userAccess: userAccessResult.data || [],
+    assignmentMode,
   })
   if (!modules.some((module) => module.key === moduleKey)) {
     return { state: 'forbidden', user, organization, organizations }
   }
   storeOrganizationId(user.id, organization.id)
-  return { state: 'authorized', user, organization, organizations, module: modules[0] }
+  return { state: 'authorized', user, organization, organizations,
+    module: modules.find((module) => module.key === moduleKey), modules }
 }
