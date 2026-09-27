@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/summer/assets/:path*", "destination": "/assets/:path*" },
+    { "source": "/summer/favicon.png", "destination": "/favicon.png" },
+    { "source": "/summer/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
